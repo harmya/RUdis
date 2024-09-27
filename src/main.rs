@@ -42,14 +42,13 @@ fn execute_command(command: CommandType, data: String) -> String {
     match command {
         CommandType::PING => {
             let pong_message = parse_single_string(data);
-            return format!("PONG {}", pong_message);
+            return format!("PONG {}\n", pong_message);
         },
         CommandType::WHAT => {
-            return "This is a implementation of redis using Rust. 
-                Checkout my github repo: www.github.com/harmya".to_string();
+            return "This is a implementation of redis using Rust. Checkout my github repo: www.github.com/harmya\n".to_string();
         },
         CommandType::ERROR => {
-            return String::from("Error executing command");
+            return String::from("Error executing command\n");
         }
     }
 }
@@ -58,7 +57,7 @@ fn respond(request: String) -> String {
     let request = request.trim();
 
     if request.is_empty() {
-        return "Error parsing request, no bytes in request body".to_string();
+        return "Error parsing request, no bytes in request body\n".to_string();
     }
 
     // println!("Message: {}", request);
@@ -67,7 +66,7 @@ fn respond(request: String) -> String {
     let request_command = match request_parts.next() {
         Some(command) => command,
         None => {
-            return "Error parsing commands".to_string();
+            return "Error parsing commands\n".to_string();
         }
     };
     
