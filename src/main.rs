@@ -1,9 +1,6 @@
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 
-use serde::{Deserialize, Serialize};
-use httparse;
-
 
 enum CommandType {
     PING,
@@ -22,33 +19,30 @@ impl CommandType {
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Request {
-    message: String
-}
-
-
-fn parse_single_string(data: String) -> String {
-    // check first character
-    let first_char = data.chars().next().unwrap();
-    if first_char == '+' {
-        return data[1..].trim_end_matches("\r\n").to_string();
+fn require_data(data: String) -> String {
+    if data.is_empty() {
+        return String::from("");
     } else {
-        return String::from("Error parsing string");
+        // if data has single quotes, remove them
+        if data.starts_with('\'') && data.ends_with('\'') {
+            return data[1..data.len()-1].to_string();
+        } else {
+            return data;
+        }
     }
 }
 
 fn execute_command(command: CommandType, data: String) -> String {
     match command {
         CommandType::PING => {
-            let pong_message = parse_single_string(data);
+            let pong_message = require_data(data);
             return format!("PONG {}\n", pong_message);
         },
         CommandType::WHAT => {
-            return "This is a implementation of redis using Rust. Checkout my github repo: www.github.com/harmya\n".to_string();
+            return "This is a implementation of redis using Rust. Checkout my github: www.github.com/harmya\n".to_string();
         },
         CommandType::ERROR => {
-            return String::from("Error executing command\n");
+            return String::from("Error executing command, not found\n");
         }
     }
 }
@@ -80,13 +74,16 @@ fn respond(request: String) -> String {
 
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
-    let bytes_read = stream.read(&mut buffer).expect("Failed to read message in the buffer");
-    let request = String::from_utf8_lossy(&buffer[..bytes_read]);
-    println!("Request:\n{}", request);
-
-    let response  = respond(request.into_owned());
-
-    stream.write(response.as_bytes()).expect("Failed to send response");
+    loop {
+        let bytes_read = stream.read(&mut buffer).expect("Failed to read message in the buffer");
+        if bytes_read == 0 {
+            break;
+        }
+        let request = String::from_utf8_lossy(&buffer[..bytes_read]);
+        println!("Request:\n{}", request);
+        let response  = respond(request.into_owned());
+        stream.write(response.as_bytes()).expect("Failed to send response");
+    }
 }
 
 
