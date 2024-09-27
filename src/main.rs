@@ -9,8 +9,12 @@ struct Request {
     message: String
 }
 
-fn parse_message_to_response(response: String) -> Request {
-    let deserialized: Request = serde_json::from_str(&response).unwrap();
+fn parse_message_to_response(request: String) -> Request {
+    if request.is_empty() {
+        let empty_request = Request { message: String::from("") };
+        return empty_request;
+    }
+    let deserialized: Request = serde_json::from_str(&request).unwrap();
     return deserialized;
 }
 
