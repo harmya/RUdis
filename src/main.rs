@@ -49,7 +49,7 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                std::thread::spawn(|| handle_client(stream));
+                handle_client(stream);
             }
             Err(e) => {
                 eprintln!("Error e:{}", e)
