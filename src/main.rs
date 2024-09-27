@@ -61,7 +61,7 @@ fn respond(request: String) -> String {
         return "Error parsing request, no bytes in request body".to_string();
     }
 
-    println!("Message: {}", request);
+    // println!("Message: {}", request);
     let mut request_parts = request.splitn(2, ' ');
     
     let request_command = match request_parts.next() {
@@ -78,8 +78,8 @@ fn respond(request: String) -> String {
         }
     };
 
-    println!("Request Command: {}", request_command);
-    println!("Request Data: {}", request_data);
+    // println!("Request Command: {}", request_command);
+    // println!("Request Data: {}", request_data);
 
     let response = execute_command(CommandType::from_str(request_command), 
         request_data.to_string());
@@ -90,24 +90,10 @@ fn respond(request: String) -> String {
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     let bytes_read = stream.read(&mut buffer).expect("Failed to read message in the buffer");
-    let http_request = String::from_utf8_lossy(&buffer[..]);
-    println!("HTTP Request:\n{}", http_request);
+    let request = String::from_utf8_lossy(&buffer[..bytes_read]);
+    println!("Request:\n{}", request);
 
-    let mut headers = [httparse::EMPTY_HEADER; 64];
-    let mut req = httparse::Request::new(&mut headers);
-    let res = req.parse(&buffer).unwrap();
-    if let httparse::Status::Partial = res {
-        println!("Incomplete request");
-        return;
-    }
-
-    let header_len = res.unwrap();
-    let body_str = String::from_utf8_lossy(&buffer[header_len..bytes_read]);
-    let response_body  = respond(body_str.into_owned());
-
-    let status_line = "HTTP/1.1 200 OK\r\n";
-    let headers = "Content-Type: text/plain\r\nContent-Length: 256\r\n\r\n";
-    let response = format!("{}{}{}", status_line, headers, response_body);
+    let response  = respond(request.into_owned());
 
     stream.write(response.as_bytes()).expect("Failed to send response");
 }
@@ -131,6 +117,3 @@ fn main() {
     }
 
 }
-
-
-
