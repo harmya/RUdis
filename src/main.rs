@@ -70,21 +70,13 @@ fn respond(request: String) -> String {
             return "Error parsing commands".to_string();
         }
     };
-
-    let request_data = match request_parts.next() {
-        Some(data) => data,
-        None => {
-            return "Error parsing data".to_string();
-        }
-    };
+    
+    let request_data = request_parts.next().unwrap_or("");
 
     // println!("Request Command: {}", request_command);
     // println!("Request Data: {}", request_data);
 
-    let response = execute_command(CommandType::from_str(request_command), 
-        request_data.to_string());
-
-    return response;
+    return execute_command(CommandType::from_str(request_command), request_data.to_string());
 }
 
 fn handle_client(mut stream: TcpStream) {
