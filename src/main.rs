@@ -58,8 +58,8 @@ fn execute_command(command: CommandType, data: String, storage: &mut std::collec
             let value = data_parts.next().unwrap_or("");
             let key = require_data(key.to_string());
             let value = require_data(value.to_string());
-            let response = format!("Success");
-            storage.insert(key, value).expect("Failed to insert key value pair");
+            let response = format!("Success\n");
+            storage.insert(key, value);
             return response;
         },
         CommandType::GET => {
