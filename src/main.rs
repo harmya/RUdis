@@ -1,6 +1,6 @@
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
-
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpListener;
+use tokio::net::TcpStream;
 
 enum CommandType {
     PING,
@@ -72,36 +72,31 @@ fn respond(request: String) -> String {
     return execute_command(CommandType::from_str(request_command), request_data.to_string());
 }
 
-fn handle_client(mut stream: TcpStream) {
+async fn handle_client(mut stream: TcpStream) {
     let mut buffer = [0; 1024];
     loop {
-        let bytes_read = stream.read(&mut buffer).expect("Failed to read message in the buffer");
+        let bytes_read = stream.read(&mut buffer).await.expect("Failed to read message in the buffer");
         if bytes_read == 0 {
+            println!("Connection closed");
             break;
         }
         let request = String::from_utf8_lossy(&buffer[..bytes_read]);
         println!("Request:\n{}", request);
         let response  = respond(request.into_owned());
-        stream.write(response.as_bytes()).expect("Failed to send response");
+        stream.write(response.as_bytes()).await.expect("Failed to send response");
     }
 }
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let port = "8080";
-    let listener: TcpListener = TcpListener::bind(format!("127.0.0.1:{}", port))
-        .expect("Failed to bind!");
-    println!("Server running on localhost at PORT={}", port);
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                handle_client(stream);
-            }
-            Err(e) => {
-                eprintln!("Error e:{}", e)
-            }
-            
-        }
-    }
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
 
+    println!("Server running on localhost at PORT={}", port);
+    loop {
+        let (stream, _) = listener.accept().await.unwrap();
+        tokio::spawn(async move {
+            handle_client(stream).await;
+        });
+    }
 }
